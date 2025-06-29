@@ -1,0 +1,864 @@
+erDiagram
+    %% Workspace and Organization
+    Workspace {
+        string id PK
+        string name
+        string description
+        json settings
+        boolean isActive
+        datetime createdAt
+        string createdBy FK
+    }
+    
+    Folder {
+        string id PK
+        string workspaceId FK
+        string parentFolderId FK
+        string name
+        string path
+        json metadata
+        datetime createdAt
+        string createdBy FK
+    }
+    
+    %% Asset Foundation (NEW)
+    Asset {
+        string id PK
+        string workspaceId FK
+        string assetTypeId FK
+        string name
+        json metadata
+        json extractedData
+        string status
+        datetime createdAt
+        string createdBy FK
+        datetime updatedAt
+        string updatedBy FK
+    }
+    
+    AssetType {
+        string id PK
+        string workspaceId FK
+        string name
+        string baseType "file|document|client|custom"
+        json metadataSchema
+        json validationRules
+        json extractionRules
+        boolean isSystemType
+        datetime createdAt
+        string createdBy FK
+    }
+    
+    AssetTaxonomy {
+        string id PK
+        string workspaceId FK
+        string parentTaxonomyId FK
+        string name
+        string taxonomyType
+        json metadata
+        int sortOrder
+        datetime createdAt
+    }
+    
+    AssetTaxonomyMapping {
+        string id PK
+        string assetId FK
+        string taxonomyId FK
+        datetime mappedAt
+        string mappedBy FK
+    }
+    
+    %% Client (extends Asset)
+    Client {
+        string id PK
+        string assetId FK
+        string workspaceId FK
+        string companyName
+        json contactInfo
+        json address
+        json branding
+        json communicationHistory
+        json apiConfig
+        boolean isActive
+        datetime createdAt
+    }
+    
+    %% Work Item System
+    WorkItem {
+        string id PK
+        string workItemTypeId FK
+        string workspaceId FK
+        string folderId FK
+        string clientId FK
+        string parentWorkItemId FK
+        json assetData
+        string status
+        string currentStage
+        json formData
+        json slaConfig
+        datetime dueDate
+        string createdBy FK
+        string updatedBy FK
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    WorkItemType {
+        string id PK
+        string workspaceId FK
+        string parentTypeId FK
+        string name
+        string pluralName
+        int hierarchyLevel
+        json terminology
+        json dataModel
+        json stageTemplates
+        json defaultSLA
+        boolean isSystemType
+        string iconUrl
+        string color
+        datetime createdAt
+    }
+    
+    %% Relationship Template System (NEW)
+    RelationshipTemplate {
+        string id PK
+        string workspaceId FK
+        string name
+        json hierarchyDefinition
+        json customTerminology
+        json stageGateRules
+        json dependencyMatrix
+        int maxHierarchyDepth
+        datetime createdAt
+        string createdBy FK
+    }
+    
+    WorkItemRelationship {
+        string id PK
+        string parentWorkItemId FK
+        string childWorkItemId FK
+        string relationshipTemplateId FK
+        string relationshipType
+        json stageGateStatus
+        boolean requiresHITL
+        datetime createdAt
+    }
+    
+    %% Form and Template System
+    FormTemplate {
+        string id PK
+        string workItemTypeId FK
+        string stageName
+        string name
+        json layout
+        json validationRules
+        json conditionalLogic
+        json assetTypeRequirements
+        datetime createdAt
+        string createdBy FK
+    }
+    
+    FormField {
+        string id PK
+        string formTemplateId FK
+        string fieldName
+        string fieldType
+        string dataPath
+        json schema
+        json validationRules
+        json displayOptions
+        string linkedAssetTypeId FK
+        boolean isRequired
+        int sortOrder
+    }
+    
+    FormSubmission {
+        string id PK
+        string workItemId FK
+        string formTemplateId FK
+        json submittedData
+        string submittedBy FK
+        datetime submittedAt
+        string validationStatus
+    }
+    
+    ApprovalRule {
+        string id PK
+        string workItemTypeId FK
+        string stageName
+        json conditions
+        string approverRole
+        int escalationMinutes
+        boolean requiresHITL
+        datetime createdAt
+    }
+    
+    %% File Processing (extends Asset)
+    File {
+        string id PK
+        string assetId FK
+        string workItemId FK
+        string filename
+        string mimeType
+        int fileSize
+        string blobStorageUrl
+        string checksum
+        datetime uploadedAt
+        string uploadedBy FK
+    }
+    
+    Document {
+        string id PK
+        string assetId FK
+        string fileId FK
+        string workItemId FK
+        string documentType
+        int startPage
+        int endPage
+        json metadata
+        text ocrText
+        float confidence
+        datetime extractedAt
+    }
+    
+    %% Agent System (Specialized per WorkItemType)
+    Agent {
+        string id PK
+        string workItemTypeId FK
+        string name
+        string agentType
+        json configuration
+        string version
+        boolean isActive
+        datetime createdAt
+        string ownerId FK
+    }
+    
+    AgentContext {
+        string id PK
+        string agentId FK
+        string stageName
+        text systemPrompt
+        json extractionRules
+        json validationRules
+        json knowledgeBase
+        datetime updatedAt
+    }
+    
+    AgentSuggestion {
+        string id PK
+        string workItemId FK
+        string agentId FK
+        string fieldPath
+        json suggestedValue
+        json previousValue
+        text thoughtProcess
+        float confidence
+        float learningWeight
+        string status
+        string reviewedBy FK
+        string reviewerExpertiseLevel
+        datetime createdAt
+        datetime reviewedAt
+    }
+    
+    Script {
+        string id PK
+        string name
+        string language
+        text code
+        json parameters
+        json outputSchema
+        string version
+        datetime createdAt
+        string agentId FK
+    }
+    
+    Flow {
+        string id PK
+        string name
+        json dagDefinition
+        json nodeConfiguration
+        string version
+        boolean isTemplate
+        datetime createdAt
+        string parentFlowId FK
+        string workItemTypeId FK
+    }
+    
+    FlowNode {
+        string id PK
+        string flowId FK
+        string nodeType
+        string scriptId FK
+        string agentId FK
+        json configuration
+        int executionOrder
+    }
+    
+    Tool {
+        string id PK
+        string name
+        string description
+        json metadata
+        json requiredInputs
+        string capabilities
+        string workspaceId FK
+        string version
+        string flowId FK
+        string agentId FK
+    }
+    
+    %% User and Access Control - Three-Tier System
+    User {
+        string id PK
+        string azureAdId
+        string email
+        string displayName
+        json orgProfile
+        string instanceRole "superadmin|devops|user"
+        datetime lastLoginAt
+        boolean isActive
+        datetime createdAt
+    }
+    
+    WorkspaceAccess {
+        string id PK
+        string userId FK
+        string workspaceId FK
+        string workspaceRoleId FK
+        string expertiseLevel "standard|advanced_operator|hitl_reviewer"
+        datetime grantedAt
+        string grantedBy FK
+    }
+    
+    WorkspaceRole {
+        string id PK
+        string workspaceId FK
+        string name "admin|developer|operator|advanced_operator"
+        string description
+        json permissions
+        boolean isDefault
+        datetime createdAt
+    }
+    
+    FolderPermission {
+        string id PK
+        string folderId FK
+        string principalType "user|group"
+        string principalId FK
+        string permissionLevel "viewer|writer|admin"
+        boolean isInherited
+        datetime grantedAt
+        string grantedBy FK
+    }
+    
+    UserGroup {
+        string id PK
+        string workspaceId FK
+        string name
+        string azureAdGroupId
+        json roleBindings
+        datetime createdAt
+    }
+    
+    UserGroupMembership {
+        string userId FK
+        string userGroupId FK
+        datetime joinedAt
+    }
+    
+    Permission {
+        string id PK
+        string workspaceRoleId FK
+        string resource
+        string action
+        string scope
+        string scopeId FK
+    }
+    
+    %% Task and HITL
+    Task {
+        string id PK
+        string taskType
+        string title
+        text description
+        string status
+        string priority
+        string workItemId FK
+        string assignedUserId FK
+        string assignedGroupId FK
+        datetime dueDate
+        datetime completedAt
+        boolean isHITL
+        json formData
+        json decisionMetadata
+    }
+    
+    %% Integration and External Systems
+    Integration {
+        string id PK
+        string workspaceId FK
+        string name
+        string integrationType
+        json credentials
+        json schema
+        json syncConfig
+        json transformFunctions
+        json assetTypeMappings
+        boolean isActive
+        datetime lastSyncAt
+    }
+    
+    IntegrationLog {
+        string id PK
+        string integrationId FK
+        string direction
+        datetime timestamp
+        json payload
+        string status
+        text errorMessage
+    }
+    
+    %% Additional Supporting Entities
+    ExecutionHistory {
+        string id PK
+        string executionType
+        string entityId FK
+        string entityType
+        json inputData
+        json outputData
+        string status
+        int durationMs
+        datetime startedAt
+        datetime completedAt
+        text errorLog
+    }
+    
+    AuditLog {
+        string id PK
+        string workspaceId FK
+        string entityType
+        string entityId
+        string action
+        json previousState
+        json newState
+        string userId FK
+        datetime timestamp
+        string ipAddress
+        boolean isImpersonation
+        string impersonatedUserId FK
+    }
+    
+    Notification {
+        string id PK
+        string notificationType
+        string recipientId FK
+        string channel
+        json payload
+        string status
+        datetime scheduledFor
+        datetime sentAt
+        string workspaceId FK
+        json batchingInfo
+    }
+    
+    %% Scheduling and Automation
+    Schedule {
+        string id PK
+        string workspaceId FK
+        string name
+        string cronExpression
+        string timezone
+        boolean isActive
+        string targetType
+        string targetId FK
+        json configuration
+        datetime nextRunAt
+        datetime lastRunAt
+        string createdBy FK
+    }
+    
+    ScheduleExecution {
+        string id PK
+        string scheduleId FK
+        datetime scheduledFor
+        datetime startedAt
+        datetime completedAt
+        string status
+        json result
+        text errorMessage
+    }
+    
+    Webhook {
+        string id PK
+        string workspaceId FK
+        string name
+        string url
+        string secret
+        string httpMethod
+        json headers
+        string eventType
+        boolean isActive
+        datetime createdAt
+    }
+    
+    WebhookEvent {
+        string id PK
+        string webhookId FK
+        string eventType
+        json payload
+        string status
+        int attemptCount
+        datetime triggeredAt
+        datetime lastAttemptAt
+        text lastError
+    }
+    
+    %% Templates and Configuration
+    Template {
+        string id PK
+        string workspaceId FK
+        string name
+        string templateType
+        string category
+        json definition
+        json defaultParameters
+        string version
+        boolean isPublic
+        string ownerId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    TemplateInstance {
+        string id PK
+        string templateId FK
+        string instanceType
+        string instanceId FK
+        json parameterOverrides
+        datetime createdAt
+        string createdBy FK
+    }
+    
+    Configuration {
+        string id PK
+        string key
+        json value
+        string environment
+        string scope
+        string scopeId FK
+        boolean isSecret
+        datetime effectiveFrom
+        datetime effectiveTo
+        string updatedBy FK
+    }
+    
+    %% Metrics and Analytics
+    Metric {
+        string id PK
+        string metricType
+        string entityType
+        string entityId FK
+        string name
+        float value
+        json dimensions
+        datetime timestamp
+        string workspaceId FK
+    }
+    
+    Analytics {
+        string id PK
+        string workspaceId FK
+        string reportType
+        string name
+        json query
+        json aggregations
+        string schedule
+        string ownerId FK
+        datetime createdAt
+    }
+    
+    %% Queue and Cache
+    Queue {
+        string id PK
+        string queueName
+        string messageType
+        json payload
+        string priority
+        string status
+        int retryCount
+        datetime createdAt
+        datetime processAfter
+        datetime processedAt
+        string processedBy FK
+        text errorMessage
+        string workspaceId FK
+    }
+    
+    QueueDeadLetter {
+        string id PK
+        string originalQueueId FK
+        json originalPayload
+        text failureReason
+        int attemptCount
+        datetime movedAt
+    }
+    
+    Cache {
+        string id PK
+        string cacheKey
+        string cacheType
+        json value
+        datetime expiresAt
+        datetime createdAt
+        string tags
+    }
+    
+    %% Security and Feature Management
+    Secret {
+        string id PK
+        string workspaceId FK
+        string name
+        string vaultPath
+        string secretType
+        datetime rotatedAt
+        datetime expiresAt
+        string ownerId FK
+        json metadata
+    }
+    
+    FeatureFlag {
+        string id PK
+        string flagKey
+        string description
+        boolean defaultValue
+        json rules
+        json targetingRules
+        boolean isActive
+        string workspaceId FK
+        datetime createdAt
+        string updatedBy FK
+    }
+    
+    RateLimiter {
+        string id PK
+        string limiterKey
+        string scope
+        int maxRequests
+        int windowSeconds
+        datetime windowStart
+        int currentCount
+    }
+    
+    %% Relationships
+    
+    %% Workspace is the top-level container
+    Workspace ||--o{ Folder : "contains"
+    Workspace ||--o{ Asset : "contains"
+    Workspace ||--o{ AssetType : "defines"
+    Workspace ||--o{ AssetTaxonomy : "organizes"
+    Workspace ||--o{ Client : "contains"
+    Workspace ||--o{ WorkItemType : "defines"
+    Workspace ||--o{ RelationshipTemplate : "defines"
+    Workspace ||--o{ WorkspaceAccess : "grants"
+    Workspace ||--o{ WorkspaceRole : "has"
+    Workspace ||--o{ UserGroup : "has"
+    Workspace ||--o{ Integration : "configured"
+    Workspace ||--o{ Schedule : "runs"
+    Workspace ||--o{ Webhook : "receives"
+    Workspace ||--o{ Template : "owns"
+    Workspace ||--o{ Analytics : "tracks"
+    Workspace ||--o{ Queue : "processes"
+    Workspace ||--o{ Secret : "stores"
+    Workspace ||--o{ FeatureFlag : "controls"
+    Workspace ||--o{ Tool : "provides"
+    
+    %% Asset is foundation
+    Asset }o--|| AssetType : "typed as"
+    Asset }o--|| Workspace : "belongs to"
+    Asset ||--o{ AssetTaxonomyMapping : "classified by"
+    Asset ||--o| File : "realized as"
+    Asset ||--o| Document : "realized as"
+    Asset ||--o| Client : "realized as"
+    Asset }o--|| User : "created by"
+    Asset }o--|| User : "updated by"
+    
+    AssetType }o--|| Workspace : "defined in"
+    AssetType ||--o{ Asset : "types"
+    AssetType ||--o{ FormField : "required by"
+    
+    AssetTaxonomy }o--|| Workspace : "defined in"
+    AssetTaxonomy ||--o| AssetTaxonomy : "child of"
+    AssetTaxonomy ||--o{ AssetTaxonomyMapping : "applied to"
+    
+    AssetTaxonomyMapping }o--|| Asset : "classifies"
+    AssetTaxonomyMapping }o--|| AssetTaxonomy : "uses"
+    AssetTaxonomyMapping }o--|| User : "mapped by"
+    
+    %% Folder hierarchy and permissions
+    Folder ||--o{ Folder : "contains"
+    Folder ||--o{ WorkItem : "organizes"
+    Folder }o--|| Workspace : "belongs to"
+    Folder ||--o{ FolderPermission : "secured by"
+    
+    FolderPermission }o--|| Folder : "secures"
+    FolderPermission }o--|| User : "granted by"
+    
+    %% Client relationships
+    Client }o--|| Asset : "extends"
+    Client }o--|| Workspace : "belongs to"
+    Client ||--o{ WorkItem : "owns"
+    
+    %% WorkItem is central
+    WorkItem }o--|| WorkItemType : "instance of"
+    WorkItem }o--|| Workspace : "belongs to"
+    WorkItem ||--o| Folder : "organized in"
+    WorkItem ||--o| Client : "associated with"
+    WorkItem ||--o| WorkItem : "parent of"
+    WorkItem ||--o{ WorkItemRelationship : "relates to"
+    WorkItem ||--o{ Task : "contains"
+    WorkItem ||--o{ FormSubmission : "has"
+    WorkItem ||--o{ AgentSuggestion : "receives"
+    WorkItem ||--o{ File : "attaches"
+    WorkItem ||--o{ Document : "contains"
+    
+    %% WorkItemType hierarchy
+    WorkItemType ||--o| WorkItemType : "parent of"
+    WorkItemType ||--o{ WorkItem : "defines"
+    WorkItemType ||--o{ FormTemplate : "uses"
+    WorkItemType ||--o{ ApprovalRule : "follows"
+    WorkItemType ||--o{ Agent : "assisted by"
+    WorkItemType ||--o{ Flow : "automates"
+    
+    %% Relationship templates
+    RelationshipTemplate }o--|| Workspace : "defined in"
+    RelationshipTemplate ||--o{ WorkItemRelationship : "governs"
+    RelationshipTemplate }o--|| User : "created by"
+    
+    WorkItemRelationship }o--|| RelationshipTemplate : "based on"
+    
+    %% Form system
+    FormTemplate }o--|| WorkItemType : "belongs to"
+    FormTemplate ||--o{ FormField : "contains"
+    FormTemplate ||--o{ FormSubmission : "filled as"
+    
+    FormField }o--|| FormTemplate : "part of"
+    FormField ||--o| AssetType : "requires"
+    
+    FormSubmission }o--|| WorkItem : "data for"
+    FormSubmission }o--|| FormTemplate : "based on"
+    FormSubmission }o--|| User : "submitted by"
+    
+    ApprovalRule }o--|| WorkItemType : "governs"
+    
+    %% File and Document
+    File }o--|| Asset : "extends"
+    File }o--|| WorkItem : "attached to"
+    File ||--o{ Document : "contains"
+    
+    Document }o--|| Asset : "extends"
+    Document }o--|| File : "extracted from"
+    Document }o--|| WorkItem : "enriches"
+    
+    %% Agent specialization
+    Agent ||--o| WorkItemType : "specialized for"
+    Agent ||--o{ AgentContext : "configured by"
+    Agent ||--o{ Script : "executes"
+    Agent ||--o{ AgentSuggestion : "generates"
+    Agent ||--o| User : "owned by"
+    
+    AgentContext }o--|| Agent : "configures"
+    
+    AgentSuggestion }o--|| WorkItem : "suggests for"
+    AgentSuggestion }o--|| Agent : "generated by"
+    AgentSuggestion ||--o| User : "reviewed by"
+    
+    %% User access - Three-tier system
+    User ||--o{ WorkspaceAccess : "has"
+    User ||--o{ UserGroupMembership : "member of"
+    User ||--o{ WorkItem : "created"
+    User ||--o{ WorkItem : "updated"
+    User ||--o{ Task : "assigned"
+    User ||--o{ AuditLog : "performed"
+    User ||--o{ AuditLog : "impersonated"
+    User ||--o{ Notification : "receives"
+    User ||--o{ FormSubmission : "submitted"
+    User ||--o{ AgentSuggestion : "reviewed"
+    User ||--o{ FolderPermission : "granted"
+    User ||--o{ Asset : "created"
+    User ||--o{ Asset : "updated"
+    
+    WorkspaceAccess }o--|| User : "granted to"
+    WorkspaceAccess }o--|| Workspace : "access to"
+    WorkspaceAccess }o--|| WorkspaceRole : "with role"
+    
+    WorkspaceRole }o--|| Workspace : "defined in"
+    WorkspaceRole ||--o{ Permission : "grants"
+    
+    UserGroup }o--|| Workspace : "exists in"
+    UserGroup ||--o{ UserGroupMembership : "has"
+    UserGroup ||--o{ Task : "assigned"
+    UserGroup ||--o{ FolderPermission : "granted"
+    
+    Permission }o--|| WorkspaceRole : "granted by"
+    
+    %% Task management
+    Task }o--|| WorkItem : "part of"
+    Task ||--o| User : "assigned to"
+    Task ||--o| UserGroup : "assigned to"
+    
+    %% Flow and automation
+    Flow ||--o{ FlowNode : "contains"
+    Flow ||--o| Flow : "has parent"
+    Flow ||--o| Tool : "wrapped by"
+    Flow ||--o| WorkItemType : "automates"
+    
+    FlowNode }o--|| Flow : "belongs to"
+    FlowNode ||--o| Script : "executes"
+    FlowNode ||--o| Agent : "invokes"
+    
+    Script }o--|| Agent : "owned by"
+    Script ||--o{ FlowNode : "used in"
+    
+    Tool ||--o| Flow : "wraps"
+    Tool ||--o| Agent : "wraps"
+    Tool }o--|| Workspace : "available in"
+    
+    %% Other relationships
+    Integration }o--|| Workspace : "configured for"
+    Integration ||--o{ IntegrationLog : "logs"
+    
+    Schedule }o--|| Workspace : "runs in"
+    Schedule ||--o{ ScheduleExecution : "triggers"
+    Schedule ||--o| User : "created by"
+    
+    Webhook }o--|| Workspace : "configured for"
+    Webhook ||--o{ WebhookEvent : "receives"
+    
+    Template }o--|| Workspace : "defined in"
+    Template ||--o{ TemplateInstance : "instantiated as"
+    Template ||--o| User : "owned by"
+    
+    Analytics }o--|| Workspace : "analyzes"
+    Analytics ||--o| User : "owned by"
+    
+    Metric }o--|| Workspace : "measured in"
+    
+    Queue }o--|| Workspace : "processes for"
+    Queue ||--o| User : "processed by"
+    Queue ||--o| QueueDeadLetter : "failed to"
+    
+    Secret }o--|| Workspace : "secured in"
+    Secret ||--o| User : "owned by"
+    
+    FeatureFlag }o--|| Workspace : "controls"
+    FeatureFlag ||--o| User : "updated by"
+    
+    Notification }o--|| Workspace : "sent from"
+    Notification }o--|| User : "sent to"
+    
+    AuditLog }o--|| Workspace : "tracked in"
+    AuditLog }o--|| User : "created by"
+    AuditLog ||--o| User : "impersonated"
